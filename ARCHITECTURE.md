@@ -9,6 +9,7 @@
 ```text
 Browser
   → Filter (chỉ /admin/*)
+  → SiteMesh decorator (chỉ /profile)
   → Servlet Controller
   → Service (nghiệp vụ, kiểm tra dữ liệu)
   → DAO (JDBC hoặc JPA/Hibernate)
@@ -28,9 +29,9 @@ Controller không chứa SQL; JSP chỉ hiển thị bằng JSTL/c:out; Service 
 | Filter | `filter/AccountStatusFilter`, `AdminAuthorizationFilter` | Làm mới trạng thái account mỗi request; bảo vệ `/admin/*`: chưa login chuyển `/login`, không phải `roleid=1` trả 403. |
 | Service | `service/`, `service/impl/` | Kiểm tra và điều phối đăng ký/login/OTP; kiểm tra Product/Category trước khi ghi. |
 | DAO JDBC | `dao/impl/UserDaoImpl`, `OtpDaoImpl`, `SmtpSettingsDaoImpl` | Dùng `PreparedStatement` cho User, OTP và cấu hình SMTP. |
-| DAO JPA | `CategoryDao`, `ProductDaoImpl` | Dùng EntityManager, transaction và JPQL cho Category/Product. |
-| Entity/Model | `entity/`, `model/User` | `Category`, `Product` là JPA entity; `User` là model JDBC. |
-| View | `webapp/views/` | JSP theo trang công khai, xác thực và quản trị. |
+| DAO JPA | `CategoryDao`, `ProductDaoImpl`, `UserProfileDaoImpl` | Dùng EntityManager, transaction và JPQL cho Category/Product/Profile. |
+| Entity/Model | `entity/`, `model/User` | `Category`, `Product`, `UserProfile` là JPA entity; `User` là model JDBC cho xác thực. |
+| View | `webapp/views/`, `WEB-INF/decorators/` | JSP theo trang công khai, xác thực, quản trị; Profile dùng decorator SiteMesh. |
 | Cấu hình | `connection/`, `config/`, `META-INF/` | JDBC, EntityManagerFactory và persistence unit. |
 | Vận hành local | `scripts/run.ps1`, `run.cmd`, `.vscode/tasks.json` | Build, deploy WAR, start Tomcat và mở trang login chỉ bằng một thao tác. |
 
@@ -51,6 +52,8 @@ Các thay đổi UX chỉ ảnh hưởng markup/CSS và khả năng đọc; name
 `User`/`UserOtp` dùng JDBC vì đây là luồng tài khoản với các lệnh SQL ngắn, trực tiếp và cập nhật OTP có điều kiện. `Category`/`Product` dùng JPA vì có quan hệ đối tượng và các truy vấn phân trang/danh sách. Hai cách cùng dùng SQL Server, nên cấu hình ở `DBConnection.java` và `persistence.xml` bắt buộc phải đồng nhất.
 
 `JpaConfig` tạo một `EntityManagerFactory` dùng chung cho toàn ứng dụng. Mỗi thao tác DAO mở `EntityManager` riêng và đóng nó ngay sau khi xong; transaction được commit hoặc rollback trong DAO. Vì vậy request đồng thời không chia sẻ `EntityManager`.
+
+`UserProfile` là JPA projection tối thiểu của bảng `User`: chỉ `id`, `fullname`, `phone`, `avatar`. Luồng login/OTP vẫn dùng `model/User` và JDBC; nhờ vậy module Profile không có quyền ghi password, role, trạng thái kích hoạt hay trạng thái khóa tài khoản. `@Nationalized` giữ mapping đúng với cột `NVARCHAR` của SQL Server.
 
 ## Mô hình dữ liệu
 
@@ -104,18 +107,32 @@ Admin /admin/products → ProductService → ProductDao → Product + Category
 
 Quản trị viên thấy cả Product hiện/ẩn để quản lý; các trang công khai chỉ thấy `status=1`. Xóa Product dùng `POST`; URL công khai không cung cấp thao tác ghi dữ liệu.
 
+### Hồ sơ người dùng
+
+```text
+/profile (đã đăng nhập)
+  → ProfileController
+  → ProfileService (kiểm tra họ tên, phone)
+  → UserProfileDaoImpl / JPA transaction
+  → cập nhật session account
+  → SiteMesh decorator `profile.html`
+```
+
+`POST /profile` nhận `multipart/form-data`. Controller chỉ nhận PNG/JPG/GIF/WEBP, giới hạn file 5 MB và request 6 MB, bỏ tên file từ client, sinh UUID rồi lưu dưới `APP_UPLOAD_DIR/profile`. Chỉ user trong session mới sửa được bản ghi có đúng `id` của mình. Sau commit, ảnh cũ do hệ thống quản lý sẽ được xóa; khi validation thất bại, ảnh mới vừa tạo cũng được dọn lại. `WEB-INF/sitemesh3.xml` chỉ map `/profile` sang `WEB-INF/decorators/profile.html`; mode `include` bảo đảm decorator hoạt động trên Tomcat 11.
+
 ## Bản đồ URL
 
 | URL | Vai trò |
 |---|---|
 | `/login`, `/logout`, `/register` | Đăng nhập, đăng xuất, đăng ký. |
+| `/profile` | User đang đăng nhập tự xem/sửa họ tên, phone và avatar. Render bằng SiteMesh. |
 | `/activate`, `/forgot-password`, `/reset-password` | Kích hoạt và phục hồi tài khoản bằng OTP. |
 | `/home`, `/product`, `/product/detail?id=N` | Trang sản phẩm công khai. |
 | `/admin/categories`, `/admin/category/*` | CRUD Category, chỉ admin. |
 | `/admin/products`, `/admin/product/*` | CRUD Product, chỉ admin. |
 | `/admin/users` | Danh sách user, gửi lại OTP, khóa/mở tài khoản; chỉ admin. |
 | `/admin/mail-settings` | Cấu hình và gửi thử email OTP, chỉ admin. |
-| `/image?fname=...` | Đọc ảnh Category đã upload; chặn đường dẫn tuyệt đối và `..`. |
+| `/image?fname=...` | Đọc ảnh Category/Profile đã upload; chặn đường dẫn tuyệt đối và `..`. |
 
 ## Bảo mật hiện có và giới hạn
 
@@ -123,6 +140,7 @@ Quản trị viên thấy cả Product hiện/ẩn để quản lý; các trang 
 - OTP là số ngẫu nhiên 6 chữ số, database chỉ giữ SHA-256, hạn 10 phút, dùng một lần; gửi lại làm vô hiệu mã cũ và tối đa 5 lần nhập sai.
 - App Password của Gmail `vhoanglong54@gmail.com` được admin lưu qua giao diện local (mật khẩu write-only) hoặc dùng biến môi trường/system property làm dự phòng. Source và Git không chứa credential.
 - SQL dùng `PreparedStatement` cho mọi giá trị động của User/OTP.
+- Upload Profile không dùng tên file do browser cung cấp; server kiểm tra loại ảnh, giới hạn dung lượng và sinh UUID trước khi lưu.
 
 Đây là bài tập; trước khi đưa lên production nên thêm CSRF token cho các form ghi dữ liệu, cookie `Secure`/`HttpOnly`/`SameSite`, rate limit cho login/OTP, log có kiểm soát, đưa SMTP password sang secret manager/biến môi trường, cấu hình database qua biến môi trường và tài khoản DB quyền tối thiểu.
 

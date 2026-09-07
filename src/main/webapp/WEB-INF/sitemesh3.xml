@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemesh>
+    <decorator-prefix>/WEB-INF/decorators/</decorator-prefix>
+    <!-- Tomcat 11 must include decorator content to preserve SiteMesh's response buffer. -->
+    <dispatch-mode>include</dispatch-mode>
+    <mapping path="/profile" decorator="profile.html"/>
+    <mapping path="/image" exclude="true"/>
+</sitemesh>

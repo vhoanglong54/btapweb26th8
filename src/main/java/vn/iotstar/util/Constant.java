@@ -9,5 +9,6 @@ public final class Constant {
     public static final String LOGIN = "/views/login.jsp";
     public static final String REGISTER = "/views/register.jsp";
     public static File categoryDirectory(){File dir=new File(DIR,"category");if(!dir.exists()&&!dir.mkdirs())throw new IllegalStateException("Không thể tạo thư mục "+dir);return dir;}
+    public static File profileDirectory(){File dir=new File(DIR,"profile");if(!dir.exists()&&!dir.mkdirs())throw new IllegalStateException("Không thể tạo thư mục "+dir);return dir;}
     private static String uploadDirectory() { String configured = System.getProperty("APP_UPLOAD_DIR"); if (configured == null || configured.isBlank()) configured = System.getenv("APP_UPLOAD_DIR"); return configured == null || configured.isBlank() ? new File(System.getProperty("user.home"), "ServletCRUDMVC/upload").getPath() : configured; }
 }

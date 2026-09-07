@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><sitemesh:write property="title"/></title>
+  <sitemesh:write property="head"/>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <a class="brand" href="home"><span class="brand-mark">DS</span><span>Dragon Store</span></a>
+      <nav class="site-nav" aria-label="Điều hướng hồ sơ">
+        <a href="product">Sản phẩm</a>
+        <a href="profile" aria-current="page">Hồ sơ</a>
+        <form class="logout-form" action="logout" method="post"><button class="nav-button" type="submit">Đăng xuất</button></form>
+      </nav>
+    </div>
+  </header>
+  <sitemesh:write property="body"/>
+</body>
+</html>

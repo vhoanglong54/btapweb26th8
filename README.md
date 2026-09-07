@@ -1,6 +1,6 @@
 # Dragon Store
 
-Dragon Store là ứng dụng quản lý Category và Product viết bằng Java 17, Servlet/JSP, SQL Server và Maven. Các chức năng tài khoản gồm đăng ký, kích hoạt OTP qua email, đăng nhập, ghi nhớ đăng nhập và quên mật khẩu.
+Dragon Store là ứng dụng quản lý Category và Product viết bằng Java 17, Servlet/JSP, SQL Server và Maven. Các chức năng tài khoản gồm đăng ký, kích hoạt OTP qua email, đăng nhập, ghi nhớ đăng nhập, quên mật khẩu và tự quản lý hồ sơ.
 
 - [Thiết kế hệ thống](ARCHITECTURE.md): kiến trúc, phân lớp, quan hệ dữ liệu, endpoint và các quyết định kỹ thuật.
 - [Tài liệu vận hành chức năng](FUNCTIONAL_DOCUMENTATION.md): luồng OTP, Products và checklist nghiệm thu.
@@ -13,6 +13,7 @@ Dragon Store là ứng dụng quản lý Category và Product viết bằng Java
 | Đăng nhập, ghi nhớ và đăng xuất | Đã triển khai; logout xóa cả session lẫn cookie ghi nhớ. | `/login`, `/logout` |
 | Quản lý người dùng | Đã triển khai; admin xem trạng thái OTP, gửi lại OTP và khóa/mở tài khoản. | `/admin/users` |
 | Quên mật khẩu qua OTP email | Đã triển khai; dùng cùng cấu hình SMTP trên giao diện admin. | `/forgot-password` → `/reset-password` |
+| Hồ sơ người dùng qua JPA + SiteMesh | Đã triển khai; user tự sửa họ tên, số điện thoại, ảnh đại diện multipart. | `/profile` |
 | Product quan hệ 1-n Category và CRUD admin | Đã triển khai. | `/admin/products` |
 | Hiển thị 10 Product mới nhất | Đã triển khai. | `/home` |
 | Hiển thị Product phân trang 6 bản ghi/trang | Đã triển khai. | `/product?page=N` |
@@ -90,6 +91,7 @@ Mặc định script dùng Java 17, Maven và Tomcat tại `D:\.tools_web`. Nế
 2. Mở `/admin/products`, thêm tối thiểu 11 Product, rồi kiểm tra thêm/sửa/xóa/ẩn.
 3. Kiểm tra `/home` chỉ hiện tối đa 10 Product mới nhất, `/product` hiện 6 Product mỗi trang và trang chi tiết hoạt động.
 4. Với admin, mở **Email OTP**, lưu và gửi thử App Password của `vhoanglong54@gmail.com`; sau đó đăng ký một tài khoản mới, hoàn tất OTP và kiểm tra quên mật khẩu. Trang **Người dùng** cho phép kiểm tra trạng thái và gửi lại OTP khi cần.
+5. Sau khi đăng nhập, mở **Hồ sơ** hoặc `/profile`, cập nhật họ tên, số điện thoại và thử chọn một ảnh hợp lệ; lưu thành công phải quay lại trang hồ sơ, tên trên session được cập nhật và ảnh đại diện hiển thị.
 
 Lệnh kiểm tra trước khi deploy:
 
@@ -100,4 +102,4 @@ mvn clean package
 
 ## Upload ảnh
 
-Category cho phép upload PNG/JPG/GIF/WEBP. Thiết lập `APP_UPLOAD_DIR` để chọn thư mục lưu ảnh; nếu bỏ trống, ứng dụng lưu tại `ServletCRUDMVC/upload` bên trong home directory của user chạy Tomcat. Thư mục phải có quyền ghi.
+Category và Profile cho phép upload PNG/JPG/GIF/WEBP. Ảnh đại diện Profile được nhận bằng `multipart/form-data`, giới hạn 5 MB, đổi tên UUID và lưu vào `profile/`; chỉ tên file do server sinh mới được ghi database. Thiết lập `APP_UPLOAD_DIR` để chọn thư mục lưu ảnh; nếu bỏ trống, ứng dụng lưu tại `ServletCRUDMVC/upload` bên trong home directory của user chạy Tomcat. Thư mục phải có quyền ghi.

@@ -1,4 +1,4 @@
-# Tài liệu vận hành: tài khoản, OTP và sản phẩm
+# Tài liệu vận hành: tài khoản, OTP, hồ sơ và sản phẩm
 
 Tài liệu này mô tả nghiệp vụ và nghiệm thu. Xem [ARCHITECTURE.md](ARCHITECTURE.md) để hiểu phân lớp, dữ liệu và các endpoint; xem [README.md](README.md) để chạy project từ đầu.
 
@@ -32,7 +32,18 @@ Nếu SMTP gửi lỗi sau khi user đã tạo, trang kích hoạt vẫn mở đ
 
 `/forgot-password` nhận email, phát OTP mục đích `RESET_PASSWORD` và lưu email trong session tạm. Tại `/reset-password`, người dùng nhập OTP và mật khẩu mới (ít nhất 8 ký tự). Chỉ khi OTP hợp lệ mật khẩu mới được hash PBKDF2 và ghi xuống database. OTP đã dùng hoặc hết hạn không dùng lại được.
 
-## 3. Luồng Products
+## 3. Hồ sơ người dùng
+
+User đã đăng nhập mở menu **Hồ sơ** hoặc `/profile`. Trang này được quản lý bởi SiteMesh: nội dung JSP `views/profile.jsp` chỉ chứa phần nội dung riêng, còn `WEB-INF/decorators/profile.html` chứa khung điều hướng dùng chung. `WEB-INF/sitemesh3.xml` chỉ map route `/profile`, vì vậy các màn hình hiện có không bị ảnh hưởng.
+
+`POST /profile` dùng `multipart/form-data` và chỉ sửa ba trường `fullname`, `phone`, `avatar` của chính user trong session. `UserProfile` là entity JPA độc lập, giới hạn các cột được phép chỉnh sửa; thao tác update nằm trong transaction và rollback nếu lỗi.
+
+- Họ tên là bắt buộc; số điện thoại có thể bỏ trống, nếu có phải dài 8--30 ký tự và chỉ gồm số, dấu `+`, khoảng trắng, `(`, `)`, `.`, `-`.
+- Ảnh là tùy chọn. Chỉ nhận PNG/JPG/GIF/WEBP có content type tương ứng, tối đa 5 MB; toàn bộ request tối đa 6 MB.
+- Tên ảnh do server tạo bằng UUID, lưu trong `APP_UPLOAD_DIR/profile`; database chỉ lưu đường dẫn tương đối `profile/<uuid>.<ext>`. Không giữ tên gốc do browser gửi.
+- Sau khi lưu, session `account` được làm mới để các request sau dùng họ tên và avatar mới. Ảnh cũ chỉ bị xóa sau khi transaction thành công; file mới sẽ bị dọn nếu validation không đạt.
+
+## 4. Luồng Products
 
 `Product` có quan hệ nhiều-một bắt buộc với `Category`; một `Category` có danh sách `products`. Dữ liệu chính: tên, mô tả, giá không âm, URL ảnh, trạng thái, thời điểm tạo và category.
 
@@ -45,7 +56,7 @@ Nếu SMTP gửi lỗi sau khi user đã tạo, trang kích hoạt vẫn mở đ
 
 Khi xóa Category, mapping JPA cascade sẽ xóa Product liên quan trong cùng thao tác, tránh vi phạm khóa ngoại.
 
-## 4. Kiểm thử trước khi deploy
+## 5. Kiểm thử trước khi deploy
 
 Chạy các lệnh sau tại thư mục project:
 
@@ -56,7 +67,7 @@ mvn clean package
 
 Sau khi build thành công, file deploy là `target/ServletCRUDMVC.war`. Smoke test SMTP cần thông tin SMTP thực tế; sau khi cấu hình và deploy WAR, kiểm thử thủ công theo checklist dưới đây.
 
-## 5. Checklist nghiệm thu thủ công
+## 6. Checklist nghiệm thu thủ công
 
 1. Đăng ký email mới, kiểm tra không thể login trước kích hoạt; nhận OTP, xác thực và login thành công.
 2. Nhập OTP sai, gửi lại OTP, thử OTP cũ, OTP mới và OTP đã dùng.
@@ -64,8 +75,9 @@ Sau khi build thành công, file deploy là `target/ServletCRUDMVC.war`. Smoke t
 4. Login admin `vuhoanglong/vuhoanglong`, tạo ít nhất 11 Product ở các Category khác nhau; kiểm tra thêm/sửa/xóa/ẩn.
 5. Kiểm tra `/home` có đúng tối đa 10 sản phẩm mới nhất, `/product` có đúng 6 sản phẩm mỗi trang và link chi tiết hoạt động ở cả hai trang.
 6. Login admin, mở **Email OTP**, nhập cấu hình Gmail, bấm **Lưu và gửi thử** và kiểm tra email nhận được trước khi kiểm thử OTP.
+7. Login một user, mở `/profile`; thử cập nhật họ tên/phone, upload một PNG/JPG/GIF/WEBP dưới 5 MB, sau đó thử file sai định dạng và file quá giới hạn. Đảm bảo chỉ hồ sơ user hiện tại thay đổi.
 
-## 6. Ma trận yêu cầu bài tập
+## 7. Ma trận yêu cầu bài tập
 
 | Yêu cầu | Hiện thực | Cách kiểm tra |
 |---|---|---|
@@ -75,12 +87,13 @@ Sau khi build thành công, file deploy là `target/ServletCRUDMVC.war`. Smoke t
 | Quản lý người dùng | `/admin/users`; admin xem danh sách, trạng thái OTP và khóa/mở hoặc gửi lại OTP. | Login admin, mở Người dùng, thử gửi lại OTP cho account chưa active hoặc khóa/mở account khác. |
 | Cấu hình gửi email bằng giao diện | `/admin/mail-settings`, `SmtpSettingsDaoImpl`, `SmtpMailService`; filter chỉ cho admin. | Lưu Gmail SMTP, bấm “Lưu và gửi thử”, nhận email kiểm tra. |
 | Quên mật khẩu qua OTP | `ForgotPasswordController`, `ResetPasswordController`, OTP `RESET_PASSWORD`. | Nhập email đã đăng ký, xác thực OTP, đặt mật khẩu mới. |
+| Hồ sơ User bằng JPA + SiteMesh | `ProfileController` + `ProfileService` + `UserProfileDaoImpl`; `views/profile.jsp` được decorator bởi SiteMesh. | Login, mở `/profile`, lưu họ tên/phone và upload ảnh hợp lệ. |
 | Bảng Product quan hệ 1-n Category | `Product.category_id` là foreign key; `Category.products` là `@OneToMany`. | Chỉ tạo Product sau khi đã có Category; kiểm tra Product hiển thị đúng Category. |
 | CRUD Product | `/admin/products`, `/admin/product/add`, `/edit`, `/delete`; filter giới hạn admin. | Thêm, sửa, ẩn/hiện và xóa Product bằng admin. |
 | 10 Product mới nhất ở trang chủ | `HomeController` gọi `newest(10)`. | Tạo hơn 10 Product hiển thị, mở `/home`. |
 | Phân trang 6 Product | `ProductListController` dùng `PAGE_SIZE = 6`. | Mở `/product?page=1`, `/product?page=2`. |
 | Chi tiết Product | Link từ card đến `/product/detail?id=N`. | Bấm một Product ở `/home` hoặc `/product`. |
 
-## 7. Điều kiện để OTP gửi email thật
+## 8. Điều kiện để OTP gửi email thật
 
 Code gửi email đã hoàn tất qua SMTP. Với môi trường bài tập, admin lưu App Password của `vhoanglong54@gmail.com` qua `/admin/mail-settings`; `SmtpMailService` lấy cấu hình này trước. Nếu chưa có, service dùng `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` (và tùy chọn `MAIL_PORT`, `MAIL_STARTTLS`) từ system property/biến môi trường. Nếu cả hai đều thiếu, tạo user vẫn thành công nhưng màn hình kích hoạt hiển thị lỗi gửi OTP và cho phép gửi lại sau khi cấu hình.
