@@ -4,5 +4,4 @@
     <!-- Tomcat 11 must include decorator content to preserve SiteMesh's response buffer. -->
     <dispatch-mode>include</dispatch-mode>
     <mapping path="/profile" decorator="profile.html"/>
-    <mapping path="/image" exclude="true"/>
 </sitemesh>
