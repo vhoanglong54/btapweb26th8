@@ -8,6 +8,8 @@ public class User implements Serializable {
     private int id, roleid;
     private String email, userName, fullName, passWord, avatar, phone;
     private Date createdDate;
+    /** active = completed email OTP; enabled = account is allowed to use the system. */
+    private boolean active, enabled = true;
     public User() { }
     public User(String email, String userName, String fullName, String passWord, String avatar, int roleid, String phone, Date createdDate) {
         this.email=email; this.userName=userName; this.fullName=fullName; this.passWord=passWord; this.avatar=avatar; this.roleid=roleid; this.phone=phone; this.createdDate=createdDate;
@@ -17,4 +19,6 @@ public class User implements Serializable {
     public String getFullName(){return fullName;} public void setFullName(String v){fullName=v;} public String getPassWord(){return passWord;} public void setPassWord(String v){passWord=v;}
     public String getAvatar(){return avatar;} public void setAvatar(String v){avatar=v;} public String getPhone(){return phone;} public void setPhone(String v){phone=v;}
     public Date getCreatedDate(){return createdDate;} public void setCreatedDate(Date v){createdDate=v;}
+    public boolean isActive(){return active;} public void setActive(boolean v){active=v;}
+    public boolean isEnabled(){return enabled;} public void setEnabled(boolean v){enabled=v;}
 }

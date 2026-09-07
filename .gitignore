@@ -6,3 +6,4 @@ upload/
 .settings/
 .idea/
 *.iml
+scripts/smtp.local.ps1

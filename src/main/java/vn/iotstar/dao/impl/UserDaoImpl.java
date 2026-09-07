@@ -6,8 +6,63 @@ import vn.iotstar.dao.UserDao;
 import vn.iotstar.model.User;
 
 public class UserDaoImpl extends DBConnection implements UserDao {
-    public User get(String username) { String sql="SELECT * FROM [User] WHERE username=?"; try(Connection cn=getConnection(); PreparedStatement ps=cn.prepareStatement(sql)){ps.setString(1,username);try(ResultSet rs=ps.executeQuery()){if(!rs.next())return null; User u=new User();u.setId(rs.getInt("id"));u.setEmail(rs.getString("email"));u.setUserName(rs.getString("username"));u.setFullName(rs.getString("fullname"));u.setPassWord(rs.getString("password"));u.setAvatar(rs.getString("avatar"));u.setRoleid(rs.getInt("roleid"));u.setPhone(rs.getString("phone"));u.setCreatedDate(rs.getDate("createdDate"));return u;}}catch(Exception e){throw new IllegalStateException("Không thể đọc User",e);} }
-    public void insert(User u) { String sql="INSERT INTO [User](email,username,fullname,password,avatar,roleid,phone,createdDate) VALUES (?,?,?,?,?,?,?,?)"; try(Connection cn=getConnection();PreparedStatement ps=cn.prepareStatement(sql)){ps.setString(1,u.getEmail());ps.setString(2,u.getUserName());ps.setString(3,u.getFullName());ps.setString(4,u.getPassWord());ps.setString(5,u.getAvatar());ps.setInt(6,u.getRoleid());ps.setString(7,u.getPhone());ps.setDate(8,u.getCreatedDate());ps.executeUpdate();}catch(Exception e){throw new IllegalStateException("Không thể thêm User",e);} }
-    public boolean checkExistEmail(String value){return exists("email",value);} public boolean checkExistUsername(String value){return exists("username",value);} public boolean checkExistPhone(String value){return exists("phone",value);}
-    private boolean exists(String field,String value){String sql="SELECT 1 FROM [User] WHERE "+field+"=?";try(Connection cn=getConnection();PreparedStatement ps=cn.prepareStatement(sql)){ps.setString(1,value);try(ResultSet rs=ps.executeQuery()){return rs.next();}}catch(Exception e){throw new IllegalStateException("Không thể kiểm tra User",e);}}
+    @Override public User get(String username) { return findOne("SELECT * FROM [User] WHERE username=?", username); }
+    @Override public User getByEmail(String email) { return findOne("SELECT * FROM [User] WHERE email=?", email); }
+    @Override public User getById(int id) { return findOne("SELECT * FROM [User] WHERE id=?", id); }
+
+    @Override public java.util.List<User> findAll() {
+        java.util.List<User> users = new java.util.ArrayList<>();
+        try (Connection connection = getConnection(); PreparedStatement statement = connection.prepareStatement("SELECT * FROM [User] ORDER BY createdDate DESC, id DESC"); ResultSet result = statement.executeQuery()) {
+            while (result.next()) users.add(map(result));
+            return users;
+        } catch (Exception exception) { throw new IllegalStateException("Không thể đọc danh sách người dùng", exception); }
+    }
+
+    @Override public void insert(User user) {
+        String sql = "INSERT INTO [User](email,username,fullname,password,avatar,roleid,phone,createdDate,active,enabled) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        try (Connection connection = getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, user.getEmail()); statement.setString(2, user.getUserName()); statement.setString(3, user.getFullName()); statement.setString(4, user.getPassWord()); statement.setString(5, user.getAvatar()); statement.setInt(6, user.getRoleid()); statement.setString(7, user.getPhone()); statement.setDate(8, user.getCreatedDate()); statement.setBoolean(9, user.isActive()); statement.setBoolean(10, user.isEnabled()); statement.executeUpdate();
+        } catch (Exception exception) { throw new IllegalStateException("Không thể thêm User", exception); }
+    }
+
+    @Override public void activate(String email) { execute("UPDATE [User] SET active=1 WHERE email=?", email, null); }
+    @Override public void updatePassword(String email, String password) { execute("UPDATE [User] SET password=? WHERE email=?", email, password); }
+    @Override public void setEnabled(int id, boolean enabled) { execute("UPDATE [User] SET enabled=? WHERE id=?", enabled, id); }
+
+    @Override public boolean checkExistEmail(String value) { return exists("email", value); }
+    @Override public boolean checkExistUsername(String value) { return exists("username", value); }
+    @Override public boolean checkExistPhone(String value) { return exists("phone", value); }
+
+    private User findOne(String sql, Object value) {
+        try (Connection connection = getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (value instanceof Integer id) statement.setInt(1, id); else statement.setString(1, (String) value);
+            try (ResultSet result = statement.executeQuery()) { return result.next() ? map(result) : null; }
+        } catch (Exception exception) { throw new IllegalStateException("Không thể đọc User", exception); }
+    }
+
+    private User map(ResultSet result) throws SQLException {
+        User user = new User();
+        user.setId(result.getInt("id")); user.setEmail(result.getString("email")); user.setUserName(result.getString("username")); user.setFullName(result.getString("fullname")); user.setPassWord(result.getString("password")); user.setAvatar(result.getString("avatar")); user.setRoleid(result.getInt("roleid")); user.setPhone(result.getString("phone")); user.setCreatedDate(result.getDate("createdDate")); user.setActive(result.getBoolean("active")); user.setEnabled(result.getBoolean("enabled"));
+        return user;
+    }
+
+    private void execute(String sql, String email, String password) {
+        try (Connection connection = getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (password == null) statement.setString(1, email); else { statement.setString(1, password); statement.setString(2, email); }
+            statement.executeUpdate();
+        } catch (Exception exception) { throw new IllegalStateException("Không thể cập nhật User", exception); }
+    }
+
+    private void execute(String sql, boolean enabled, int id) {
+        try (Connection connection = getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBoolean(1, enabled); statement.setInt(2, id); statement.executeUpdate();
+        } catch (Exception exception) { throw new IllegalStateException("Không thể cập nhật trạng thái User", exception); }
+    }
+
+    private boolean exists(String field, String value) {
+        String sql = "SELECT 1 FROM [User] WHERE " + field + "=?";
+        try (Connection connection = getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, value); try (ResultSet result = statement.executeQuery()) { return result.next(); }
+        } catch (Exception exception) { throw new IllegalStateException("Không thể kiểm tra User", exception); }
+    }
 }
