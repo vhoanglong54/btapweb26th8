@@ -1,65 +1,103 @@
+# Dragon Store
 
-## Kiến trúc hệ thống
+Dragon Store là ứng dụng quản lý Category và Product viết bằng Java 17, Servlet/JSP, SQL Server và Maven. Các chức năng tài khoản gồm đăng ký, kích hoạt OTP qua email, đăng nhập, ghi nhớ đăng nhập và quên mật khẩu.
 
-Ứng dụng dùng kiến trúc **MVC kết hợp 3 tầng**. Luồng xử lý là:
+- [Thiết kế hệ thống](ARCHITECTURE.md): kiến trúc, phân lớp, quan hệ dữ liệu, endpoint và các quyết định kỹ thuật.
+- [Tài liệu vận hành chức năng](FUNCTIONAL_DOCUMENTATION.md): luồng OTP, Products và checklist nghiệm thu.
 
-`Browser → JSP form → Servlet Controller → Service → DAO → SQL Server`
+## Trạng thái yêu cầu bài tập
 
-Kết quả trả ngược về:
-
-`SQL Server → DAO → Service → Controller → JSP View → Browser`
-
-| Thành phần | Vị trí | Tác dụng |
+| Yêu cầu | Trạng thái | Điểm truy cập |
 |---|---|---|
-| Model | `src/main/java/vn/iotstar/model` | Các lớp dữ liệu `User`, `Category`; biểu diễn bản ghi lấy từ hoặc lưu xuống SQL Server. |
-| DAO | `src/main/java/vn/iotstar/dao` và `dao/impl` | Chứa SQL và thao tác JDBC: đọc/thêm/sửa/xóa `User` và `Category`. DAO không xử lý giao diện. |
-| Service | `src/main/java/vn/iotstar/service` và `service/impl` | Chứa nghiệp vụ: kiểm tra đăng nhập, kiểm tra dữ liệu trùng khi đăng ký, điều phối CRUD Category. |
-| Controller | `src/main/java/vn/iotstar/controller` | Các Servlet nhận request, gọi Service, quản lý session/cookie, chuyển tiếp JSP hoặc redirect. |
-| View | `src/main/webapp/views` | Các trang JSP hiển thị form login/register, trang chủ và quản lý Category. JSTL dùng để lặp, điều kiện và escape dữ liệu. |
-| Connection | `connection/DBConnection.java`, `config/JpaConfig.java` | Login vẫn dùng JDBC; Category/Video dùng JPA/Hibernate đến SQL Server `127.0.0.1:1433`, CSDL `ServletCRUDMVC`, tài khoản `vuhoanglong`. |
-| Utility | `util/Constant.java` | Chứa hằng dùng chung: tên session, cookie, đường dẫn JSP và thư mục lưu ảnh. |
-| Database | `database/ServletCRUDMVC.sql` | Tạo SQL Server login, CSDL, bảng `User`, `Category` và dữ liệu tài khoản quản trị. |
+| Kích hoạt account bằng OTP email khi đăng ký | Đã triển khai; OTP gửi từ Gmail admin sau khi lưu App Password trên web. | `/register` → `/activate` |
+| Đăng nhập, ghi nhớ và đăng xuất | Đã triển khai; logout xóa cả session lẫn cookie ghi nhớ. | `/login`, `/logout` |
+| Quản lý người dùng | Đã triển khai; admin xem trạng thái OTP, gửi lại OTP và khóa/mở tài khoản. | `/admin/users` |
+| Quên mật khẩu qua OTP email | Đã triển khai; dùng cùng cấu hình SMTP trên giao diện admin. | `/forgot-password` → `/reset-password` |
+| Product quan hệ 1-n Category và CRUD admin | Đã triển khai. | `/admin/products` |
+| Hiển thị 10 Product mới nhất | Đã triển khai. | `/home` |
+| Hiển thị Product phân trang 6 bản ghi/trang | Đã triển khai. | `/product?page=N` |
+| Chi tiết Product từ home và danh sách | Đã triển khai. | `/product/detail?id=N` |
 
-## Các task đã hoàn thành
+Chi tiết controller, DAO và cách nghiệm thu cho từng dòng nằm trong [FUNCTIONAL_DOCUMENTATION.md](FUNCTIONAL_DOCUMENTATION.md#6-ma-trận-yêu-cầu-bài-tập).
 
-- Tạo Maven WAR project Java 17 với các dependency Servlet, JSP, JSTL, Microsoft SQL Server JDBC, Commons FileUpload và Commons IO.
-- Tạo CSDL `ServletCRUDMVC`, bảng `[User]` và `Category`.
-- Tạo SQL Server login và tài khoản ứng dụng: `vuhoanglong` / `vuhoanglong`.
-- Thực hiện đăng ký tài khoản, kiểm tra trùng `username`, `email`, `phone` trước khi ghi xuống CSDL.
-- Thực hiện đăng nhập, kiểm tra tài khoản/mật khẩu, lưu đối tượng `User` vào `HttpSession`.
-- Thực hiện cookie “Ghi nhớ đăng nhập” trong 30 phút và tái tạo session từ cookie.
-- Điều hướng theo `roleid`: role `1` đến trang quản lý Category, role khác đến trang chủ.
-- Thực hiện CRUD Category: danh sách, tìm kiếm, thêm, sửa, xóa.
-- Hỗ trợ upload ảnh PNG/JPG/GIF/WEBP, lưu ảnh trong `D:\btap_web1\upload\category`, và hiển thị ảnh qua Servlet `/image`.
-- Cấu hình `web.xml` để session dùng cookie.
-- Đã build thành công WAR tại `target/ServletCRUDMVC.war` và triển khai Tomcat 11 cục bộ.
-- Category CRUD dùng JPA/Hibernate; bảng `Video` có quan hệ nhiều-một với `Category`.
+## Điều kiện chạy
 
-## Thiết lập và chạy ứng dụng
+- JDK 17 (`java -version` trả về 17).
+- Maven 3.8+ (`mvn -version`).
+- SQL Server đang chạy và cho phép kết nối TCP. Cấu hình mặc định của project là `127.0.0.1:1433`.
+- Tomcat 11 (hoặc servlet container hỗ trợ Jakarta Servlet 6) để chạy file WAR.
 
-1. Công cụ dùng chung được đặt ngoài project tại `D:\.tools`:
-   - JDK: `D:\.tools\jdk-17.0.20.1+1`
-   - Maven: `D:\.tools\apache-maven-3.9.11`
-   - Tomcat: `D:\.tools\apache-tomcat-11.0.25`
-2. Mở SQL Server Management Studio bằng tài khoản Windows có quyền quản trị và chạy [database/ServletCRUDMVC.sql](database/ServletCRUDMVC.sql). Script tạo login SQL Server, CSDL, bảng và tài khoản mẫu.
-3. Chạy `mvn clean package` bằng JDK 17. File WAR sinh ra là `target/ServletCRUDMVC.war`.
-4. Triển khai WAR vào `D:\.tools\apache-tomcat-11.0.25\webapps`. Trên máy này Tomcat chạy cổng `8081` vì cổng `8080` đã được dịch vụ khác sử dụng.
-5. Mở `http://localhost:8081/ServletCRUDMVC/`.
-5. Đăng nhập bằng:
+## Chạy lần đầu
 
-   - Tài khoản: `vuhoanglong`
-   - Mật khẩu: `vuhoanglong`
+### Cách nhanh nhất trên máy hiện tại
 
-## Kiểm thử chức năng
+Chỉ cần nhấp đúp [run.cmd](run.cmd). File này tự build WAR, copy vào Tomcat, khởi động Tomcat nếu cần và mở trang login.
 
-1. Đăng nhập với tài khoản mẫu, chọn **Ghi nhớ đăng nhập** và xác nhận chuyển đến Category.
-2. Thêm Category với ảnh đại diện; kiểm tra ảnh hiển thị trong danh sách.
-3. Sửa tên/ảnh và xóa Category.
-4. Đăng ký tài khoản mới; thử nhập lại username, email hoặc phone đã có để kiểm tra cảnh báo trùng.
-5. Đăng xuất, truy cập lại `/login` trong thời gian 30 phút để kiểm tra cookie khôi phục session.
+Trong VS Code, nhấn `Ctrl+Shift+B`, chọn **Run Dragon Store**. Task có cùng hành vi với `run.cmd`.
 
-## Lưu ý môi trường hiện tại
+Mặc định script dùng Java 17, Maven và Tomcat tại `D:\.tools_web`. Nếu cài nơi khác, đặt ba biến môi trường `JAVA_HOME`, `MAVEN_HOME`, `TOMCAT_HOME` trước khi chạy. Không cần đổi source code.
 
-- SQL Server Express được bật TCP/IP cổng `1433`; nếu máy khác dùng instance hoặc cổng khác, chỉnh `PORT`/`INSTANCE` trong [DBConnection.java](src/main/java/vn/iotstar/connection/DBConnection.java).
-- Tài liệu minh họa lưu ảnh tại `E:\upload`, nhưng máy hiện tại không có ổ `E:` nên ứng dụng dùng `D:\btap_web1\upload`.
-- Dự án sử dụng `jakarta.servlet` và Jakarta Persistence 3.x, vì thế chạy với **Tomcat 11**. Không deploy WAR này vào Tomcat 9.
+### Thiết lập lần đầu
+
+1. Mở SQL Server Management Studio bằng tài khoản có quyền tạo database/login, chạy toàn bộ [database/ServletCRUDMVC.sql](database/ServletCRUDMVC.sql).
+
+   Script tạo database `ServletCRUDMVC`, SQL login `vuhoanglong`, các bảng `Category`, `User`, `UserOtp`, `SmtpSettings`, `Product` và tài khoản admin mẫu. Script có thể chạy lại: các bảng, cột và index chỉ được tạo khi chưa tồn tại. Cột `User.active` là trạng thái xác thực OTP; `User.enabled` là quyền truy cập do admin khóa/mở.
+
+2. Kiểm tra hoặc đổi cấu hình database ở **cả hai** nơi sau để chúng cùng trỏ đến một database:
+
+   - [DBConnection.java](src/main/java/vn/iotstar/connection/DBConnection.java): JDBC cho `User` và `UserOtp`.
+   - [persistence.xml](src/main/resources/META-INF/persistence.xml): JPA/Hibernate cho `Category` và `Product`.
+
+   Nếu SQL Server dùng instance hoặc cổng khác, đổi `SERVER`/`PORT` trong `DBConnection.java` và URL `jakarta.persistence.jdbc.url` trong `persistence.xml` tương ứng.
+
+3. Cấu hình email OTP hoàn toàn trên giao diện:
+
+   - Chạy project, đăng nhập `vuhoanglong / vuhoanglong`.
+   - Trên thanh menu, chọn **Email OTP**.
+   - Hệ thống cố định người gửi là `vhoanglong54@gmail.com` qua Gmail SMTP (`smtp.gmail.com`, cổng `587`, STARTTLS). Bật Xác minh 2 bước cho chính Gmail này và tạo một **App Password**, rồi dán App Password vào giao diện.
+   - Nhập email nhận thư thử, bấm **Lưu và gửi thử**. Khi nhận được thư, đăng ký/kích hoạt/quên mật khẩu sẽ gửi OTP thật.
+
+   App Password là dữ liệu nhạy cảm: màn hình chỉ cho ghi, không bao giờ hiển thị lại mật khẩu đã lưu. Khi triển khai production, thay cấu hình local này bằng secret manager hoặc biến môi trường của server.
+
+4. Tại thư mục project, build WAR:
+
+   ```powershell
+   mvn clean package
+   ```
+
+   Khi thành công sẽ có `target/ServletCRUDMVC.war`.
+
+5. Chép WAR vào thư mục `webapps` của Tomcat và khởi động Tomcat. Với cấu hình mặc định của Tomcat, mở:
+
+   ```text
+   http://localhost:8081/ServletCRUDMVC/login
+   ```
+
+   Nếu đổi HTTP port hoặc đổi tên WAR/context path, thay URL theo cấu hình đó. `index.jsp` cũng chuyển hướng đến `/login`.
+
+6. Đăng nhập quản trị để tạo Category trước, sau đó tạo Product:
+
+   ```text
+   username: vuhoanglong
+   password: vuhoanglong
+   ```
+
+   Tài khoản mẫu được tạo ở trạng thái đã kích hoạt. Đổi mật khẩu này khi dùng ngoài môi trường bài tập.
+
+## Kiểm tra sau khi chạy
+
+1. Mở `/admin/categories`, thêm một Category.
+2. Mở `/admin/products`, thêm tối thiểu 11 Product, rồi kiểm tra thêm/sửa/xóa/ẩn.
+3. Kiểm tra `/home` chỉ hiện tối đa 10 Product mới nhất, `/product` hiện 6 Product mỗi trang và trang chi tiết hoạt động.
+4. Với admin, mở **Email OTP**, lưu và gửi thử App Password của `vhoanglong54@gmail.com`; sau đó đăng ký một tài khoản mới, hoàn tất OTP và kiểm tra quên mật khẩu. Trang **Người dùng** cho phép kiểm tra trạng thái và gửi lại OTP khi cần.
+
+Lệnh kiểm tra trước khi deploy:
+
+```powershell
+mvn test
+mvn clean package
+```
+
+## Upload ảnh
+
+Category cho phép upload PNG/JPG/GIF/WEBP. Thiết lập `APP_UPLOAD_DIR` để chọn thư mục lưu ảnh; nếu bỏ trống, ứng dụng lưu tại `ServletCRUDMVC/upload` bên trong home directory của user chạy Tomcat. Thư mục phải có quyền ghi.
