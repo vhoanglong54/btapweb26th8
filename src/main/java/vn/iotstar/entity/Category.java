@@ -31,7 +31,7 @@ public class Category {
     private Integer status = 1;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Video> videos = new ArrayList<>();
+    private List<Product> products = new ArrayList<>();
 
     public Category() {
     }
@@ -50,8 +50,8 @@ public class Category {
     public void setImages(String images) { this.images = images; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
-    public List<Video> getVideos() { return videos; }
-    public void setVideos(List<Video> videos) { this.videos = videos == null ? new ArrayList<>() : videos; }
+    public List<Product> getProducts() { return products; }
+    public void setProducts(List<Product> products) { this.products = products == null ? new ArrayList<>() : products; }
 
     // Aliases keep the existing JSP/controller contract unchanged.
     public int getId() { return categoryId; }
@@ -61,13 +61,4 @@ public class Category {
     public String getIcon() { return images; }
     public void setIcon(String icon) { this.images = icon; }
 
-    public void addVideo(Video video) {
-        videos.add(video);
-        video.setCategory(this);
-    }
-
-    public void removeVideo(Video video) {
-        videos.remove(video);
-        video.setCategory(null);
-    }
 }

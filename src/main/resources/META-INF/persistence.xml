@@ -6,7 +6,7 @@
     <persistence-unit name="jpa-hibernate-mysql" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <class>vn.iotstar.entity.Category</class>
-        <class>vn.iotstar.entity.Video</class>
+        <class>vn.iotstar.entity.Product</class>
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
             <property name="jakarta.persistence.jdbc.url" value="jdbc:sqlserver://127.0.0.1:1433;databaseName=ServletCRUDMVC;encrypt=false"/>
