@@ -13,6 +13,7 @@ import vn.iotstar.service.UserService;
 import vn.iotstar.service.impl.OtpServiceImpl;
 import vn.iotstar.service.impl.UserServiceImpl;
 import vn.iotstar.util.Constant;
+import vn.iotstar.util.RequestValidator;
 
 /** Admin account management: visibility, enable/disable and activation resend. */
 @WebServlet("/admin/users")
@@ -25,12 +26,12 @@ public class UserAdminController extends HttpServlet {
     }
 
     @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int userId = integer(request.getParameter("id"));
-        User target = users.getById(userId);
-        if (target == null) { show(request, response, "Không tìm thấy người dùng."); return; }
-        User current = currentUser(request.getSession(false));
-        if (current != null && current.getId() == target.getId()) { show(request, response, "Không thể khóa hoặc mở khóa chính tài khoản đang đăng nhập."); return; }
         try {
+            int userId = RequestValidator.positiveId(request.getParameter("id"), "ID người dùng");
+            User target = users.getById(userId);
+            if (target == null) { show(request, response, "Không tìm thấy người dùng."); return; }
+            User current = currentUser(request.getSession(false));
+            if (current != null && current.getId() == target.getId()) { show(request, response, "Không thể khóa hoặc mở khóa chính tài khoản đang đăng nhập."); return; }
             if ("toggle-enabled".equals(request.getParameter("action"))) {
                 users.setEnabled(target.getId(), !target.isEnabled());
                 response.sendRedirect(request.getContextPath() + "/admin/users?updated=1");
@@ -44,6 +45,8 @@ public class UserAdminController extends HttpServlet {
                 return;
             }
             show(request, response, "Thao tác không hợp lệ.");
+        } catch (IllegalArgumentException exception) {
+            show(request, response, exception.getMessage());
         } catch (RuntimeException exception) {
             show(request, response, "Không thể hoàn tất thao tác: " + readableMessage(exception));
         }
@@ -55,6 +58,5 @@ public class UserAdminController extends HttpServlet {
         request.getRequestDispatcher("/views/admin/list-user.jsp").forward(request, response);
     }
     private User currentUser(HttpSession session) { return session == null ? null : (User) session.getAttribute(Constant.SESSION_ACCOUNT); }
-    private int integer(String value) { try { return Integer.parseInt(value); } catch (Exception exception) { return 0; } }
     private String readableMessage(RuntimeException exception) { return exception.getCause() == null ? exception.getMessage() : "kiểm tra cấu hình SMTP hoặc kết nối database."; }
 }

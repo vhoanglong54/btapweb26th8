@@ -25,10 +25,11 @@ Mỗi form nhập liệu kiểm tra theo hai tầng:
 | Quên mật khẩu | Email bắt buộc và đúng định dạng. |
 | Hồ sơ | Họ tên 2--100; phone theo mẫu; avatar PNG/JPG/GIF/WEBP, tối đa 5 MB. |
 | Danh mục | Tên bắt buộc, tối đa 100; ảnh cùng whitelist MIME/phần mở rộng và giới hạn 5 MB. |
+| Tìm danh mục | Từ khóa không bắt buộc, tối đa 100 ký tự; kiểm tra ở trình duyệt và server trước khi truy vấn. |
 | Sản phẩm | Tên tối đa 255; Category ID dương; giá không âm với tối đa 2 số lẻ; URL ảnh chỉ `http`/`https`; mô tả tối đa 2000. |
 | SMTP | App Password chuẩn hóa bỏ khoảng trắng, phải 16 ký tự chữ/số; email gửi thử đúng dạng. |
 
-Các form thao tác chỉ dùng ID ẩn (xóa, khóa/mở khóa, gửi lại OTP, logout) không có dữ liệu do người dùng nhập. Controller vẫn kiểm tra ID/action và filter hiện có vẫn bảo vệ quyền admin.
+Các form thao tác chỉ dùng ID ẩn (xóa, khóa/mở khóa, gửi lại OTP, logout) không có dữ liệu do người dùng nhập. Controller vẫn kiểm tra ID dương/action hợp lệ và filter hiện có vẫn bảo vệ quyền admin.
 
 ## Kiểm thử
 
