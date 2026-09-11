@@ -3,5 +3,6 @@
     <decorator-prefix>/WEB-INF/decorators/</decorator-prefix>
     <!-- Tomcat 11 must include decorator content to preserve SiteMesh's response buffer. -->
     <dispatch-mode>include</dispatch-mode>
+    <!-- One Bootstrap decorator is deliberately scoped to the profile feature. -->
     <mapping path="/profile" decorator="profile.html"/>
 </sitemesh>

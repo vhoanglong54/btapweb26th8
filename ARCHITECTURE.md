@@ -118,7 +118,7 @@ Quản trị viên thấy cả Product hiện/ẩn để quản lý; các trang 
   → SiteMesh decorator `profile.html`
 ```
 
-`POST /profile` nhận `multipart/form-data`. Controller chỉ nhận PNG/JPG/GIF/WEBP, giới hạn file 5 MB và request 6 MB, bỏ tên file từ client, sinh UUID rồi lưu dưới `APP_UPLOAD_DIR/profile`. Chỉ user trong session mới sửa được bản ghi có đúng `id` của mình. Sau commit, ảnh cũ do hệ thống quản lý sẽ được xóa; khi validation thất bại, ảnh mới vừa tạo cũng được dọn lại. `WEB-INF/sitemesh3.xml` chỉ map `/profile` sang `WEB-INF/decorators/profile.html`; mode `include` bảo đảm decorator hoạt động trên Tomcat 11.
+`POST /profile` nhận `multipart/form-data`. Controller chỉ nhận PNG/JPG/GIF/WEBP, giới hạn file 5 MB và request 6 MB, bỏ tên file từ client, sinh UUID rồi lưu dưới `APP_UPLOAD_DIR/profile`. Chỉ user trong session mới sửa được bản ghi có đúng `id` của mình. Sau commit, ảnh cũ do hệ thống quản lý sẽ được xóa; khi validation thất bại, ảnh mới vừa tạo cũng được dọn lại. `WEB-INF/sitemesh3.xml` chỉ map `/profile` sang `WEB-INF/decorators/profile.html`; mode `include` bảo đảm decorator hoạt động trên Tomcat 11. Decorator dùng Bootstrap 5.3.3 đóng gói qua WebJar trong WAR, không phụ thuộc CDN.
 
 ## Bản đồ URL
 

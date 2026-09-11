@@ -10,6 +10,7 @@ import vn.iotstar.dao.SmtpSettingsDao;
 import vn.iotstar.dao.impl.SmtpSettingsDaoImpl;
 import vn.iotstar.model.SmtpSettings;
 import vn.iotstar.service.impl.SmtpMailService;
+import vn.iotstar.util.RequestValidator;
 
 /** Admin-only screen for SMTP settings. The password is write-only in the UI. */
 @WebServlet("/admin/mail-settings")
@@ -36,10 +37,9 @@ public class SmtpSettingsController extends HttpServlet {
         try {
             settingsDao.save(settings, replacePassword);
             if ("test".equals(request.getParameter("action"))) {
-                String testEmail = request.getParameter("testEmail");
-                if (blank(testEmail)) { show(request, response, settings, "Hãy nhập email nhận thư thử."); return; }
-                new SmtpMailService().sendTestEmail(testEmail.trim());
-                show(request, response, settings, null, "Đã lưu cấu hình và gửi email thử tới " + testEmail.trim() + ".");
+                String testEmail = RequestValidator.email(request.getParameter("testEmail"));
+                new SmtpMailService().sendTestEmail(testEmail);
+                show(request, response, settings, null, "Đã lưu cấu hình và gửi email thử tới " + testEmail + ".");
                 return;
             }
             response.sendRedirect(request.getContextPath() + "/admin/mail-settings?saved=1");
@@ -52,7 +52,7 @@ public class SmtpSettingsController extends HttpServlet {
         SmtpSettings settings = new SmtpSettings();
         settings.setHost(GMAIL_HOST);
         settings.setUsername(ADMIN_EMAIL);
-        settings.setPassword(request.getParameter("password"));
+        settings.setPassword(normalizeAppPassword(request.getParameter("password")));
         settings.setFromEmail(ADMIN_EMAIL);
         settings.setStartTls(true);
         settings.setPort(GMAIL_PORT);
@@ -61,6 +61,7 @@ public class SmtpSettingsController extends HttpServlet {
 
     private String validate(SmtpSettings settings) {
         if (blank(settings.getPassword())) return "Hãy nhập Gmail App Password của vhoanglong54@gmail.com.";
+        if (!settings.getPassword().matches("[A-Za-z0-9]{16}")) return "Gmail App Password phải gồm đúng 16 chữ và số.";
         return null;
     }
 
@@ -92,4 +93,5 @@ public class SmtpSettingsController extends HttpServlet {
     }
     private String trim(String value) { return value == null ? null : value.trim(); }
     private boolean blank(String value) { return value == null || value.isBlank(); }
+    private String normalizeAppPassword(String value) { String password = trim(value); return password == null ? null : password.replace(" ", ""); }
 }

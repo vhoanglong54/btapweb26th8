@@ -1,27 +1,47 @@
 package vn.iotstar.controller;
 
 import java.io.IOException;
-import jakarta.servlet.*;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import vn.iotstar.service.OtpService;
 import vn.iotstar.service.UserService;
+import vn.iotstar.service.impl.OtpServiceImpl;
 import vn.iotstar.service.impl.UserServiceImpl;
 import vn.iotstar.util.Constant;
-import vn.iotstar.service.OtpService;
-import vn.iotstar.service.impl.OtpServiceImpl;
+import vn.iotstar.util.RequestValidator;
 
 @WebServlet("/register")
 public class RegisterController extends HttpServlet {
-    private final UserService service=new UserServiceImpl();
-    private final OtpService otpService=new OtpServiceImpl();
-    protected void doGet(HttpServletRequest req,HttpServletResponse resp)throws ServletException,IOException {if(req.getSession(false)!=null&&req.getSession(false).getAttribute(Constant.SESSION_ACCOUNT)!=null){resp.sendRedirect(req.getContextPath()+"/waiting");return;}req.getRequestDispatcher(Constant.REGISTER).forward(req,resp);}
-    protected void doPost(HttpServletRequest req,HttpServletResponse resp)throws ServletException,IOException {
-        req.setCharacterEncoding("UTF-8");String username=trim(req.getParameter("username")),password=req.getParameter("password"),email=trim(req.getParameter("email")),fullname=trim(req.getParameter("fullname")),phone=trim(req.getParameter("phone"));
-        if(blank(username)||blank(password)||blank(email)||blank(fullname)){show(req,resp,"Vui lòng nhập đủ các trường bắt buộc");return;}
-        if(password.length()<8){show(req,resp,"Mật khẩu phải có ít nhất 8 ký tự");return;}
-        if(service.checkExistEmail(email)){show(req,resp,"Email đã tồn tại!");return;} if(service.checkExistUsername(username)){show(req,resp,"Tài khoản đã tồn tại!");return;} if(!blank(phone)&&service.checkExistPhone(phone)){show(req,resp,"Số điện thoại đã tồn tại!");return;}
-        try { if(service.register(username,password,email,fullname,phone)){req.getSession().setAttribute("activationEmail",email);otpService.send(email,"ACTIVATE");resp.sendRedirect(req.getContextPath()+"/activate");}else show(req,resp,"System error!"); }
-        catch (RuntimeException e) { req.setAttribute("alert","Tạo tài khoản thành công nhưng không gửi được OTP: "+e.getMessage()); req.getRequestDispatcher("/views/activate.jsp").forward(req,resp); }
+    private final UserService users = new UserServiceImpl();
+    private final OtpService otps = new OtpServiceImpl();
+
+    @Override protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if (request.getSession(false) != null && request.getSession(false).getAttribute(Constant.SESSION_ACCOUNT) != null) { response.sendRedirect(request.getContextPath() + "/waiting"); return; }
+        request.getRequestDispatcher(Constant.REGISTER).forward(request, response);
     }
-    private boolean blank(String v){return v==null||v.trim().isEmpty();} private String trim(String v){return v==null?null:v.trim();} private void show(HttpServletRequest req,HttpServletResponse resp,String m)throws ServletException,IOException{req.setAttribute("alert",m);req.getRequestDispatcher(Constant.REGISTER).forward(req,resp);}
+
+    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        try {
+            String username = RequestValidator.username(request.getParameter("username"));
+            String password = RequestValidator.password(request.getParameter("password"), "Mật khẩu");
+            String email = RequestValidator.email(request.getParameter("email"));
+            String fullName = RequestValidator.required(request.getParameter("fullname"), "Họ và tên", 100);
+            if (fullName.length() < 2) throw new IllegalArgumentException("Họ và tên phải có ít nhất 2 ký tự.");
+            String phone = RequestValidator.phone(request.getParameter("phone"));
+            if (users.checkExistEmail(email)) throw new IllegalArgumentException("Email đã tồn tại.");
+            if (users.checkExistUsername(username)) throw new IllegalArgumentException("Tài khoản đã tồn tại.");
+            if (phone != null && users.checkExistPhone(phone)) throw new IllegalArgumentException("Số điện thoại đã tồn tại.");
+            if (!users.register(username, password, email, fullName, phone)) throw new IllegalArgumentException("Không thể tạo tài khoản. Vui lòng thử lại.");
+            request.getSession().setAttribute("activationEmail", email);
+            otps.send(email, "ACTIVATE");
+            response.sendRedirect(request.getContextPath() + "/activate");
+        } catch (IllegalArgumentException exception) { show(request, response, exception.getMessage()); }
+        catch (RuntimeException exception) { request.getSession().setAttribute("activationEmail", RequestValidator.trim(request.getParameter("email"))); request.setAttribute("alert", "Tạo tài khoản thành công nhưng chưa gửi được OTP. Hãy cấu hình SMTP rồi gửi lại mã."); request.getRequestDispatcher("/views/activate.jsp").forward(request, response); }
+    }
+
+    private void show(HttpServletRequest request, HttpServletResponse response, String message) throws ServletException, IOException { request.setAttribute("alert", message); request.getRequestDispatcher(Constant.REGISTER).forward(request, response); }
 }

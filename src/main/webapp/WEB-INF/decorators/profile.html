@@ -4,18 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><sitemesh:write property="title"/></title>
+  <!-- Bootstrap is served from the WAR through WebJars, never from a CDN. -->
+  <link rel="stylesheet" href="webjars/bootstrap/5.3.3/css/bootstrap.min.css">
   <sitemesh:write property="head"/>
 </head>
 <body>
-  <header class="site-header">
-    <div class="nav-container">
-      <a class="brand" href="home"><span class="brand-mark">DS</span><span>Dragon Store</span></a>
-      <nav class="site-nav" aria-label="Điều hướng hồ sơ">
-        <a href="product">Sản phẩm</a>
-        <a href="profile" aria-current="page">Hồ sơ</a>
-        <form class="logout-form" action="logout" method="post"><button class="nav-button" type="submit">Đăng xuất</button></form>
-      </nav>
-    </div>
+  <header class="site-header shadow-sm">
+    <nav class="navbar navbar-expand-md py-0" aria-label="Điều hướng hồ sơ">
+      <div class="nav-container container-fluid">
+        <a class="brand" href="home"><span class="brand-mark">DS</span><span>Dragon Store</span></a>
+        <div class="site-nav ms-md-auto">
+          <a href="product">Sản phẩm</a>
+          <a href="profile" aria-current="page">Hồ sơ</a>
+          <form class="logout-form" action="logout" method="post"><button class="nav-button" type="submit">Đăng xuất</button></form>
+        </div>
+      </div>
+    </nav>
   </header>
   <sitemesh:write property="body"/>
 </body>

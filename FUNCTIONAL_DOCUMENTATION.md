@@ -65,6 +65,8 @@ mvn test
 mvn clean package
 ```
 
+Quy tắc validation hai tầng (HTML/JavaScript và server), phạm vi decorator SiteMesh Bootstrap cùng các tiêu chí kiểm thử chi tiết được ghi tại [VALIDATION_AND_SITEMESH.md](VALIDATION_AND_SITEMESH.md).
+
 Sau khi build thành công, file deploy là `target/ServletCRUDMVC.war`. Smoke test SMTP cần thông tin SMTP thực tế; sau khi cấu hình và deploy WAR, kiểm thử thủ công theo checklist dưới đây.
 
 ## 6. Checklist nghiệm thu thủ công

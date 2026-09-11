@@ -1,43 +1,42 @@
 package vn.iotstar.controller;
 
-import java.io.*;
-import jakarta.servlet.*;
+import java.io.File;
+import java.io.IOException;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 import vn.iotstar.entity.Category;
 import vn.iotstar.service.CategoryService;
 import vn.iotstar.service.impl.CategoryServiceImpl;
 import vn.iotstar.util.Constant;
+import vn.iotstar.util.RequestValidator;
 
 @WebServlet({"/admin/category/edit", "/admin/category/update"})
-@MultipartConfig
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 5 * 1024 * 1024, maxRequestSize = 6 * 1024 * 1024)
 public class CategoryEditController extends HttpServlet {
-    private final CategoryService service = new CategoryServiceImpl();
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try { Category category = service.findById(Integer.parseInt(req.getParameter("id"))); if(category == null) { resp.sendError(HttpServletResponse.SC_NOT_FOUND); return; } req.setAttribute("category", category); req.getRequestDispatcher("/views/admin/edit-category.jsp").forward(req, resp); }
-        catch (RuntimeException e) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID danh mục không hợp lệ"); }
+    private final CategoryService categories = new CategoryServiceImpl();
+
+    @Override protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try { Category category = categories.findById(RequestValidator.positiveId(request.getParameter("id"), "ID danh mục")); if (category == null) { response.sendError(HttpServletResponse.SC_NOT_FOUND); return; } request.setAttribute("category", category); request.getRequestDispatcher("/views/admin/edit-category.jsp").forward(request, response); }
+        catch (IllegalArgumentException exception) { response.sendError(HttpServletResponse.SC_BAD_REQUEST, exception.getMessage()); }
     }
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        Category category = new Category();
+
+    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
         try {
-            category.setCategoryId(Integer.parseInt(req.getParameter("id")));
-            category.setCategoryname(req.getParameter("name").trim());
-            if (category.getName() == null || category.getName().isEmpty()) { resp.sendError(400, "Tên danh mục không được rỗng"); return; }
-            Category old = service.findById(category.getCategoryId()); if (old == null) { resp.sendError(404); return; }
-            category.setImages(old.getImages());
-            category.setStatus(old.getStatus());
-            Part imagePart = req.getPart("icon");
-            boolean hasNewImage = imagePart != null && imagePart.getSize() > 0;
-            if (hasNewImage) category.setImages(CategoryAddController.saveImage(imagePart));
-            service.update(category);
-            if (hasNewImage && old.getImages() != null) {
-                File oldImage = new File(Constant.DIR, old.getImages());
-                if (oldImage.exists()) oldImage.delete();
-            }
-            resp.sendRedirect(req.getContextPath() + "/admin/categories");
-        }
-        catch (Exception e) { throw new ServletException("Không thể sửa danh mục", e); }
+            int id = RequestValidator.positiveId(request.getParameter("id"), "ID danh mục");
+            Category old = categories.findById(id);
+            if (old == null) { response.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
+            Category category = new Category(); category.setCategoryId(id); category.setCategoryname(RequestValidator.required(request.getParameter("name"), "Tên danh mục", 100)); category.setStatus(old.getStatus()); category.setImages(old.getImages());
+            Part image = request.getPart("icon"); boolean hasNewImage = image != null && image.getSize() > 0;
+            if (hasNewImage) category.setImages(CategoryAddController.saveImage(image));
+            categories.update(category);
+            if (hasNewImage && old.getImages() != null && old.getImages().startsWith("category/")) { File oldImage = new File(Constant.DIR, old.getImages()); if (oldImage.isFile()) oldImage.delete(); }
+            response.sendRedirect(request.getContextPath() + "/admin/categories");
+        } catch (IllegalArgumentException exception) { response.sendError(HttpServletResponse.SC_BAD_REQUEST, exception.getMessage()); }
     }
 }

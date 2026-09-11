@@ -4,6 +4,7 @@ Dragon Store là ứng dụng quản lý Category và Product viết bằng Java
 
 - [Thiết kế hệ thống](ARCHITECTURE.md): kiến trúc, phân lớp, quan hệ dữ liệu, endpoint và các quyết định kỹ thuật.
 - [Tài liệu vận hành chức năng](FUNCTIONAL_DOCUMENTATION.md): luồng OTP, Products và checklist nghiệm thu.
+- [SiteMesh Bootstrap và validation](VALIDATION_AND_SITEMESH.md): phạm vi decorator, quy tắc kiểm tra Form và cách kiểm thử.
 
 ## Trạng thái yêu cầu bài tập
 
@@ -13,7 +14,7 @@ Dragon Store là ứng dụng quản lý Category và Product viết bằng Java
 | Đăng nhập, ghi nhớ và đăng xuất | Đã triển khai; logout xóa cả session lẫn cookie ghi nhớ. | `/login`, `/logout` |
 | Quản lý người dùng | Đã triển khai; admin xem trạng thái OTP, gửi lại OTP và khóa/mở tài khoản. | `/admin/users` |
 | Quên mật khẩu qua OTP email | Đã triển khai; dùng cùng cấu hình SMTP trên giao diện admin. | `/forgot-password` → `/reset-password` |
-| Hồ sơ người dùng qua JPA + SiteMesh | Đã triển khai; user tự sửa họ tên, số điện thoại, ảnh đại diện multipart. | `/profile` |
+| Hồ sơ người dùng qua JPA + SiteMesh Bootstrap | Đã triển khai; decorator SiteMesh 3 dùng Bootstrap đóng gói trong WAR, user tự sửa họ tên, số điện thoại, ảnh đại diện multipart. | `/profile` |
 | Product quan hệ 1-n Category và CRUD admin | Đã triển khai. | `/admin/products` |
 | Hiển thị 10 Product mới nhất | Đã triển khai. | `/home` |
 | Hiển thị Product phân trang 6 bản ghi/trang | Đã triển khai. | `/product?page=N` |

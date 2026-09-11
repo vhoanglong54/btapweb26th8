@@ -3,21 +3,32 @@ package vn.iotstar.controller;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import vn.iotstar.model.User;
 import vn.iotstar.service.OtpService;
 import vn.iotstar.service.UserService;
 import vn.iotstar.service.impl.OtpServiceImpl;
 import vn.iotstar.service.impl.UserServiceImpl;
+import vn.iotstar.util.RequestValidator;
 
 @WebServlet("/forgot-password")
 public class ForgotPasswordController extends HttpServlet {
-    private final UserService users = new UserServiceImpl(); private final OtpService otps = new OtpServiceImpl();
-    @Override protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException { req.getRequestDispatcher("/views/forgot-password.jsp").forward(req, resp); }
-    @Override protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String email = req.getParameter("email"); if (email == null || email.isBlank()) { show(req, resp, "Vui lòng nhập email."); return; }
-        vn.iotstar.model.User user = users.getByEmail(email.trim());
-        if (user != null && user.isEnabled()) { try { otps.send(email.trim(), "RESET_PASSWORD"); req.getSession().setAttribute("resetEmail", email.trim()); resp.sendRedirect(req.getContextPath() + "/reset-password"); return; } catch (RuntimeException e) { show(req, resp, "Không thể gửi OTP: " + e.getMessage()); return; } }
-        show(req, resp, "Nếu email tồn tại, mã OTP đã được gửi.");
+    private final UserService users = new UserServiceImpl();
+    private final OtpService otps = new OtpServiceImpl();
+
+    @Override protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException { request.getRequestDispatcher("/views/forgot-password.jsp").forward(request, response); }
+
+    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            String email = RequestValidator.email(request.getParameter("email"));
+            User user = users.getByEmail(email);
+            if (user != null && user.isEnabled()) { otps.send(email, "RESET_PASSWORD"); request.getSession().setAttribute("resetEmail", email); response.sendRedirect(request.getContextPath() + "/reset-password"); return; }
+            show(request, response, "Nếu email tồn tại, mã OTP đã được gửi.");
+        } catch (IllegalArgumentException exception) { show(request, response, exception.getMessage()); }
+        catch (RuntimeException exception) { show(request, response, "Không thể gửi OTP. Vui lòng thử lại sau."); }
     }
-    private void show(HttpServletRequest req, HttpServletResponse resp, String text) throws ServletException, IOException { req.setAttribute("alert", text); req.getRequestDispatcher("/views/forgot-password.jsp").forward(req, resp); }
+
+    private void show(HttpServletRequest request, HttpServletResponse response, String text) throws ServletException, IOException { request.setAttribute("alert", text); request.getRequestDispatcher("/views/forgot-password.jsp").forward(request, response); }
 }

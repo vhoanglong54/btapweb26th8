@@ -24,11 +24,11 @@
         <strong>Thiết lập một lần, sau đó OTP tự gửi.</strong>
         <span>Đăng nhập Google Account của vhoanglong54@gmail.com, bật Xác minh 2 bước và tạo <em>App Password</em>. Không dùng mật khẩu Gmail thông thường.</span>
       </div>
-      <form action="${pageContext.request.contextPath}/admin/mail-settings" method="post">
+      <form action="${pageContext.request.contextPath}/admin/mail-settings" method="post" data-validate novalidate>
         <div class="form-grid">
           <div class="mail-identity full"><span>Email gửi</span><strong>vhoanglong54@gmail.com</strong><small>Gmail SMTP · smtp.gmail.com · cổng 587 · STARTTLS</small></div>
-          <label class="field full">Gmail App Password<c:choose><c:when test="${passwordSaved}"><span class="muted"> (đã lưu; để trống để giữ nguyên)</span></c:when><c:otherwise><span class="muted"> (mã 16 ký tự)</span></c:otherwise></c:choose><input type="password" name="password" autocomplete="new-password" placeholder="${passwordSaved ? 'Đã lưu, nhập lại chỉ khi muốn thay đổi' : 'Dán App Password tại đây'}"></label>
-          <label class="field full">Email nhận thư thử <span class="muted">(không bắt buộc khi chỉ lưu)</span><input type="email" name="testEmail" placeholder="Nhập email để kiểm tra gửi thử"></label>
+          <label class="field full">Gmail App Password<c:choose><c:when test="${passwordSaved}"><span class="muted"> (đã lưu; để trống để giữ nguyên)</span></c:when><c:otherwise><span class="muted"> (mã 16 ký tự)</span></c:otherwise></c:choose><input type="password" name="password" autocomplete="new-password" minlength="16" maxlength="19" pattern="[A-Za-z0-9 ]{16,19}" placeholder="${passwordSaved ? 'Đã lưu, nhập lại chỉ khi muốn thay đổi' : 'Dán App Password tại đây'}"></label>
+          <label class="field full">Email nhận thư thử <span class="muted">(không bắt buộc khi chỉ lưu)</span><input type="email" name="testEmail" maxlength="254" placeholder="Nhập email để kiểm tra gửi thử"></label>
         </div>
         <div class="form-actions">
           <button name="action" value="save" type="submit">Lưu cấu hình</button>
